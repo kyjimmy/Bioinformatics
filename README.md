@@ -1,5 +1,4 @@
 # Bioinformatics
-Decoding DNA
 
 ### Description:
 This project provides a toolkit for studying bioinformatics using Python. Functions offered by the toolkit can be applied to solve a range of bioinformatic problems, such as finding replication origins and regulation motifs.
