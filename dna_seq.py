@@ -1,15 +1,14 @@
-"""Two classes (single_seq and multi_seq) can be used to study bioinformatics."""
+"""Two DNA classes (single_seq and multi_seq) can be used to study genome."""
 
+from bio_table import NUC_BASES, DNA_CODONS
 from collections import Counter
 from itertools import product
 import random
 
-NUC_BASES = ["A", "C", "G", "T"]
 REFERENCE = {'A': 0, 'C': 1, 'G': 2, 'T': 3}
 
-
 class single_seq:
-    """DNA sequnece class. Defalt value: ACGT, No label"""
+    """DNA sequnece class. Default value: ACGT, No label"""
 
     def __init__(self, seq="ACGT", label='No label'):
         """Sequence initialization, validation."""
@@ -265,9 +264,86 @@ class single_seq:
                 best_kmer = kmer
         return best_kmer
 
+    def construct_kmer(self, k):
+        """
+        Generates the k-mer composition of the DNA sequence.
+
+        Parameters:
+        ----------
+        k (int): k-mer length
+  
+        Returns
+        ----------
+        set: A list containing all possible k-mers 
+        """
+        kmers = set()
+        for i in range(len(self.seq)-k+1):
+            kmers.add(self.seq[i:i+k])
+        return kmers
+
+    def debrujin_graph(self,k):
+        """
+        Constructs a deBruijn graph of the DNA sequence.
+
+        Parameters:
+        ----------
+        k (int): k-mer length
+  
+        Returns
+        ----------
+        dict: DeBruijn graph in the form of an adjacency list 
+        """
+        node_len = k-1
+        Nodes = {}
+        for i in range(len(self.seq)-k+1):
+            pattern = self.seq[i:i+node_len]
+            temp = self.seq[i+1:i+node_len+1]
+            if pattern not in Nodes:
+                Nodes[pattern] = [temp]
+            else:
+                Nodes[pattern].append(temp)
+        return Nodes
+    
+    def translation(self):
+        """
+        Translate (& transcribe) the DNA sequence into an amino acid string.
+  
+        Returns
+        ----------
+        str: An amino acid string
+        """
+        return translation_dna(self.seq)
+
+    def find_codon_string(self,pattern):
+        """
+        Find substrings of then DNA sequence encoding a given amino acid sequence.
+
+        Parameters:
+        ----------
+        pattern (str): The peptide pattern
+
+        Returns
+        ----------
+        list: All substrings of the DNA sequence encoding the given peptide
+        """
+        seq_len = len(self.seq)
+        pat_len = len(pattern)*3
+        peptide = []
+        for i in range(0,seq_len-pat_len+1):
+            if DNA_CODONS[self.seq[i:i+3]] == pattern[0]:
+                if translation_dna(self.seq[i:i+pat_len]) == pattern:
+                    peptide.append(self.seq[i:i+pat_len])
+    
+        reverse = RevComplement(self.seq)
+        for w in range(0,seq_len-pat_len+1):
+            if DNA_CODONS[reverse[w:w+3]] == pattern[0]:
+                if translation_dna(reverse[w:w+pat_len]) == pattern:
+                    peptide.append(RevComplement(reverse[w:w+pat_len]))  
+        return peptide 
+
 
 class multi_seq:
-    """A collection of DNA sequneces class. Defalt value: ["ATTTGGC","TGCCTTA","CGGTATC"], No label"""
+    """A collection of DNA sequneces class. Default value: ["ATTTGGC","TGCCTTA","CGGTATC"], No label"""
 
     def __init__(self, seqs=["ATTTGGC", "TGCCTTA", "CGGTATC"], label='No Label'):
         """Sequence initialization, validation."""
@@ -443,7 +519,6 @@ class multi_seq:
 
 # Other functions
 
-
 def HammingDist(seq1, seq2):
     # Calculates the Hamming distance
     count = 0
@@ -571,3 +646,16 @@ def GibbsSampler(seqs, k, t, N):
             best_motif = motif
             best_score = score
     return best_motif, best_score
+
+def translation_dna(seq):
+    # DNA translation
+    peptide = []
+    length = len(seq)
+    if length%3 != 0:
+        length = (length//3)*3
+    for i in range(0,length,3):
+        if DNA_CODONS[seq[i:i+3]] != '_':
+            peptide.append(DNA_CODONS[seq[i:i+3]])
+        else:
+            break
+    return ''.join(peptide)
